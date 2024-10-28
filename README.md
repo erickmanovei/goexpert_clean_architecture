@@ -15,20 +15,8 @@ Inclua um README.md com os passos a serem executados no desafio e a porta em que
 
 ## Passos para executar o projeto
 
-1. Suba os containers Docker rodando na raiz do projeto o comando:
+1. Suba os containers Docker e inicie a aplicação rodando na raiz do projeto o comando:
 `docker-compose up -d`
-
-2. Instale o golang-migrate seguindo orientações do link abaixo:
-`https://github.com/golang-migrate/migrate/tree/master/cmd/migrate`
-
-3. Rode as migrations:
-`make migrate`
-
-4. Navegue até o diretório cmd/ordersystem:
-`cd cmd/ordersystem`
-
-5. Rode o projeto:
-`go run .`
 
 ## Portas dos Serviços
 

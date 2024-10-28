@@ -6,6 +6,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: orders
+      MYSQL_USER: root
       MYSQL_PASSWORD: root
     ports:
       - 3310:3306
@@ -17,8 +18,51 @@ services:
     container_name: rabbitmqCompose
     restart: always
     ports:
-      - 5673:5672
-      - 15673:15672
+      - 5672:5672
+      - 15672:15672
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+
+  db-init:
+    image: mysql:8.0
+    command: >
+      sh -c "
+      until mysql -h mysql -uroot -proot -e 'CREATE DATABASE IF NOT EXISTS orders'; do
+        echo 'Waiting for MySQL to initialize database...'
+        sleep 2
+      done"
+    depends_on:
+      - mysql
+
+  migrate:
+    image: migrate/migrate
+    depends_on:
+      - db-init
+    entrypoint: >
+      sh -c "
+      until nc -z mysql 3306; do
+        echo 'Waiting for MySQL...'
+        sleep 2
+      done &&
+      migrate -path=/sql/migrations -database 'mysql://root:root@tcp(mysql:3306)/orders' up
+      "
+    volumes:
+      - ./sql/migrations:/sql/migrations
+
+  ordersystem:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - migrate
+    ports:
+      - 8000:8000
+      - 50051:50051
+      - 8080:8080
+    environment:
+      DATABASE_URL: "mysql://root:root@tcp(mysql:3306)/orders"
+    command: >
+      sh -c "cd ./cmd/ordersystem && go run ."
+    volumes:
+      - .:/app

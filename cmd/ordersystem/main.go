@@ -3,8 +3,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
+	"time"
 
 	graphql_handler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -85,7 +87,24 @@ func main() {
 }
 
 func getRabbitMQChannel() *amqp.Channel {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	rabbitMQURL := "amqp://guest:guest@rabbitmqCompose:5672/"
+	maxRetries := 10
+	retryDelay := 5 * time.Second
+
+	var conn *amqp.Connection
+	var err error
+
+	for i := 1; i <= maxRetries; i++ {
+		conn, err = amqp.Dial(rabbitMQURL)
+		if err == nil {
+			fmt.Println("Conectado ao RabbitMQ com sucesso!")
+			break
+		}
+
+		log.Printf("Tentativa %d de %d falhou: %v", i, maxRetries, err)
+		time.Sleep(retryDelay)
+	}
+
 	if err != nil {
 		panic(err)
 	}
